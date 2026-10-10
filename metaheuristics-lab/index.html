@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Metaheuristics Lab — TSP playground</title>
+  <meta name="description" content="Watch nearest neighbour, hill climbing, simulated annealing, a genetic algorithm and the bees algorithm race to solve the travelling salesman problem, live in your browser.">
+  <meta name="theme-color" content="#0a0c0b">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Metaheuristics Lab — TSP playground">
+  <meta property="og:description" content="Five algorithms race to solve the travelling salesman problem, live in your browser.">
+  <meta property="og:image" content="assets/preview.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="#top" id="top">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="#f5c542"/>
+          <path d="M8 22 13 9l6 9 5-6" fill="none" stroke="#1a1405" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="8" cy="22" r="2.4" fill="#1a1405"/><circle cx="13" cy="9" r="2.4" fill="#1a1405"/><circle cx="19" cy="18" r="2.4" fill="#1a1405"/><circle cx="24" cy="12" r="2.4" fill="#1a1405"/>
+        </svg>
+        <span>Metaheuristics Lab</span>
+      </a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="#lab">Playground</a>
+        <a href="#learn">How it works</a>
+        <a href="#about">About</a>
+      </nav>
+      <button class="btn btn-ghost btn-sm" id="share" type="button">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span>Share this map</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero container">
+    <p class="eyebrow">Travelling salesman problem · live comparison</p>
+    <h1>Watch five strategies race to the <em>shortest tour</em>.</h1>
+    <p class="lead">Place cities, pick your algorithms and press run. Nearest neighbour, hill climbing, simulated annealing, a genetic algorithm and the bees algorithm all search the same map with the same compute budget, so you can see how each one trades speed for quality.</p>
+  </section>
+
+  <main id="lab" class="lab container">
+    <aside class="panel" aria-label="Controls">
+      <section class="group">
+        <h2>Map</h2>
+        <label class="field" for="n">
+          <span class="field-label">Cities <output id="n-out">60</output></span>
+          <input type="range" id="n" min="4" max="250" value="60">
+        </label>
+        <div class="field">
+          <span class="field-label">Layout</span>
+          <div class="seg" id="layout" role="group" aria-label="Layout">
+            <button type="button" data-v="uniform" aria-pressed="true">Uniform</button>
+            <button type="button" data-v="clusters" aria-pressed="false">Clusters</button>
+            <button type="button" data-v="circle" aria-pressed="false">Circle</button>
+          </div>
+        </div>
+        <label class="field" for="seed">
+          <span class="field-label">Seed</span>
+          <span class="seed-row">
+            <input type="number" id="seed" min="0" step="1" inputmode="numeric">
+            <button type="button" class="icon-btn" id="dice" aria-label="Random seed" title="Random seed">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+            </button>
+          </span>
+        </label>
+        <div class="field-row">
+          <button type="button" class="btn btn-ghost btn-sm" id="clear">Clear map</button>
+          <p class="hint">or click the map to add cities</p>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Algorithms</h2>
+        <div id="algo-list" class="algo-list"></div>
+      </section>
+
+      <section class="group">
+        <h2>Run</h2>
+        <div class="run-row">
+          <button type="button" class="btn btn-primary" id="run">
+            <svg class="i i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></svg>
+            <svg class="i i-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></svg>
+            <span>Run</span>
+          </button>
+          <button type="button" class="btn btn-ghost" id="step" title="Advance every algorithm by one iteration">Step</button>
+          <button type="button" class="btn btn-ghost" id="reset">Reset</button>
+        </div>
+        <p class="hint" id="run-hint" aria-live="polite"></p>
+        <label class="field" for="speed">
+          <span class="field-label">Animation speed <output id="speed-out">Normal</output></span>
+          <input type="range" id="speed" min="1" max="5" value="3">
+        </label>
+        <div class="field">
+          <span class="field-label">Compute budget per algorithm</span>
+          <div class="seg" id="budget" role="group" aria-label="Compute budget">
+            <button type="button" data-v="2000" aria-pressed="false">2 s</button>
+            <button type="button" data-v="5000" aria-pressed="true">5 s</button>
+            <button type="button" data-v="15000" aria-pressed="false">15 s</button>
+          </div>
+        </div>
+        <p class="hint">Tip: press <kbd>Space</kbd> to run or pause.</p>
+      </section>
+    </aside>
+
+    <section class="stage" aria-label="Results">
+      <div class="card map-card">
+        <div class="card-head">
+          <div class="focus-tabs" id="focus-tabs" role="group" aria-label="Algorithm shown on the map"></div>
+          <p class="map-meta" id="map-meta"></p>
+        </div>
+        <div class="map-wrap">
+          <canvas id="map" aria-label="Map of cities and the best tour found by the selected algorithm"></canvas>
+          <p class="map-empty" id="map-empty" hidden>Click to place at least 4 cities</p>
+        </div>
+      </div>
+
+      <div class="results" id="results"></div>
+
+      <div class="card chart-card">
+        <div class="card-head">
+          <div>
+            <h3>Convergence</h3>
+            <p class="sub">Best tour length found so far, against compute time. Lower is better.</p>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart" aria-label="Convergence chart"></canvas></div>
+      </div>
+    </section>
+  </main>
+
+  <section id="learn" class="learn container">
+    <header class="section-head">
+      <p class="eyebrow">How it works</p>
+      <h2>Five ways to find a short tour</h2>
+      <p class="lead">The travelling salesman problem asks for the shortest closed route that visits every city once. With n cities there are (n − 1)! / 2 possible tours, about 10<sup>80</sup> for just 60 cities, so checking them all is impossible. These algorithms trade a guarantee of optimality for good answers, fast.</p>
+    </header>
+
+    <div class="learn-grid">
+      <article class="learn-card" style="--c:#9aa3ad">
+        <p class="tag">Constructive · baseline</p>
+        <h3>Nearest neighbour</h3>
+        <p>Start somewhere and always travel to the closest unvisited city. It's fast (O(n²)) but short-sighted: early greedy choices force long jumps at the end. Tours are typically 15–25% longer than optimal. Trying every start city and keeping the best helps a little.</p>
+        <pre><code>tour ← [start]
+while cities remain:
+    go to the nearest unvisited city
+return to start</code></pre>
+      </article>
+
+      <article class="learn-card" style="--c:#5ec8f2">
+        <p class="tag">Local search</p>
+        <h3>Hill climbing (2-opt)</h3>
+        <p>A <b>2-opt move</b> removes two edges and reconnects the tour by reversing the segment between them, which untangles crossings. Each step tries every move and applies the best improvement. When nothing improves, it has reached a <b>local optimum</b>, so it restarts from a new random tour.</p>
+        <pre><code>repeat:
+    find the 2-opt move with the largest gain
+    if no move improves: restart (or stop)
+    else apply it</code></pre>
+      </article>
+
+      <article class="learn-card" style="--c:#ff7a59">
+        <p class="tag">Trajectory metaheuristic</p>
+        <h3>Simulated annealing</h3>
+        <p>Like hill climbing, but it sometimes accepts a <i>worse</i> tour, with probability e<sup>−Δ/T</sup>. While the temperature T is high, it wanders and escapes local optima; as T cools geometrically (T ← αT), it settles into a good region. T₀ is calibrated so a typical uphill move is initially accepted 50% of the time.</p>
+        <pre><code>T ← T₀
+while T > T_min:
+    repeat k times:
+        try a random 2-opt move (gain Δ)
+        accept if Δ &lt; 0 or rand() &lt; e^(−Δ/T)
+    T ← α · T</code></pre>
+      </article>
+
+      <article class="learn-card" style="--c:#b18cff">
+        <p class="tag">Population · evolutionary</p>
+        <h3>Genetic algorithm</h3>
+        <p>Keeps a population of tours. Parents are picked by <b>tournament selection</b>. <b>Order crossover (OX)</b> copies a slice of one parent and fills the rest in the other parent's order, so children are always valid tours. <b>Inversion mutation</b> reverses a random segment, and <b>elitism</b> keeps the best tours. Without local search it converges slowly, which is why hybrid "memetic" variants exist.</p>
+        <pre><code>population ← random tours
+each generation:
+    keep the elites
+    while not full:
+        child ← OX(select(), select())
+        maybe invert a segment of child
+    population ← children</code></pre>
+      </article>
+
+      <article class="learn-card" style="--c:#f5c542">
+        <p class="tag">Population · swarm intelligence</p>
+        <h3>Bees algorithm</h3>
+        <p>Inspired by honey-bee foraging. <b>Scouts</b> sample random tours (sites). The best <i>m</i> sites get <b>recruited bees</b> (more for the <i>e</i> elite sites), and each bee searches a "flower patch" of 2-opt moves around its site. Patches <b>shrink</b> when a site stops improving, and a site that stagnates too long is <b>abandoned</b> for a new scout, balancing exploration and exploitation.</p>
+        <pre><code>sites ← n random tours
+each cycle:
+    for each of the best m sites:
+        send nep (elite) or nsp bees
+        move the site to the best neighbour
+        shrink / abandon if stuck
+    replace the rest with new scouts</code></pre>
+      </article>
+
+      <article class="learn-card learn-card-note">
+        <p class="tag">Reading the results</p>
+        <h3>A fair comparison</h3>
+        <p>Each algorithm gets the <b>same compute-time budget</b> and its own seeded random generator, so runs are reproducible. The <b>gap to leader</b> shows how far each tour is from the best found in this race. That isn't necessarily the true optimum, except on the circle layout, where the optimal tour is the polygon itself.</p>
+        <p>Try the circle layout: 2-opt methods reach the optimum quickly. Then try 200 clustered cities and see which strategies scale.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="about" class="about container">
+    <div class="about-grid">
+      <div>
+        <p class="eyebrow">About this project</p>
+        <h2>Built from scratch, with no libraries</h2>
+        <p class="lead">Metaheuristics Lab is a single-page app written in plain JavaScript modules, with no framework and no build step. The algorithms are pure modules, independent of the browser and covered by unit tests in Node.</p>
+      </div>
+      <ul class="facts">
+        <li><b>O(1) move evaluation.</b> A 2-opt move only changes two edges, so its gain is computed from four distances without rebuilding the tour.</li>
+        <li><b>Time-sliced runner.</b> All algorithms run on the main thread; each animation frame gives every active algorithm an equal slice of CPU time, keeping the page responsive.</li>
+        <li><b>Reproducible.</b> A seeded PRNG (mulberry32) drives map generation and every algorithm, and the map is encoded in the URL so you can share it.</li>
+        <li><b>Tested.</b> The tests check tour validity, the 2-opt delta, budget enforcement, and that local search reaches the known optimum on convex instances.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="footer container">
+    <p>Metaheuristics Lab · built by <a href="https://github.com/khbadri16" target="_blank" rel="noopener">Khelfat Badereddine</a></p>
+    <a href="#top">Back to top ↑</a>
+  </footer>
+</body>
+</html>

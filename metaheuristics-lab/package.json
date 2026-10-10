@@ -1,0 +1,11 @@
+{
+  "name": "metaheuristics-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive TSP playground comparing nearest neighbour, hill climbing, simulated annealing, a genetic algorithm and the bees algorithm.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
